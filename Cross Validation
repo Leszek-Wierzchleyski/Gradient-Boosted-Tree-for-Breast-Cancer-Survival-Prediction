@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct  7 22:47:22 2024
+
+@author: leszekwierzchleyski
+
+"""
+
+"""This script perfroms cross validation on the histogram based gradient 
+boosted tree model. Many thanks to Cancer Research UK, the British Columbia 
+Cancer Foundation and Canadian Breast Cancer Foundation"""
+import sklearn
+from sklearn.decomposition import PCA
+import pandas as pd
+from sklearn.model_selection import ParameterGrid
+from sklearn.utils.fixes import loguniform
+import numpy as np
+from sklearn import model_selection
+from sklearn import ensemble
+from sklearn.metrics import get_scorer_names
+from sklearn.model_selection import cross_validate
+
+
+File = 'METABRIC_RNA_Mutation.csv'
+Dataset = pd.read_csv(File)
+
+""""Prepare Labels""" 
+label_list = []
+
+for i in range(len(Dataset)):
+    if Dataset.iloc[:,30][i] == "Died of Disease":
+        label = 1
+    else:
+        label = 0
+    label_list.append(label)
+y_train = label_list
+
+File2 = 'Encoded_METABRIC_NoPten.csv'
+Dataset2 = pd.read_csv(File2)
+print(Dataset2.head())
+
+""""Tree Model"""
+
+classi = ensemble.HistGradientBoostingClassifier(loss='log_loss',  
+                                                 learning_rate=0.1, 
+                                                 max_iter=200, 
+                                                 max_leaf_nodes=1000, 
+                                                 max_depth=15, 
+                                                 min_samples_leaf=2, 
+                                                 l2_regularization=0.25, 
+                                                  
+                                                 max_bins=255, 
+                                                 categorical_features=None, 
+                                                 monotonic_cst=None, 
+                                                 interaction_cst=None, 
+                                                 warm_start=False, 
+                                                 early_stopping=False, 
+                                                 scoring='loss', 
+                                                 validation_fraction=None, 
+                                                 n_iter_no_change=10, 
+                                                 tol=1e-07, verbose=2, 
+                                                 random_state=None, 
+                                                 class_weight=None)
+
+""""Cross Validation"""
+cross=cross_validate(classi, Dataset2, y=y_train, groups=None,  cv=5, 
+               n_jobs=None, verbose=2, fit_params=None,  
+               pre_dispatch='2*n_jobs',                
+               return_estimator=False,  error_score=np.nan,  scoring=('accuracy'),
+                        return_train_score=True)
+
+cross
+
+print(cross['test_score'])
